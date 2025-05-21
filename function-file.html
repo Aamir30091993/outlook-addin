@@ -3,17 +3,20 @@
 <head>
   <meta charset="utf-8" />
   <title>Function File</title>
-  <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
-  <script>
-    Office.onReady(function(info) {
-      // Office is ready
-      if (info.host === Office.HostType.Outlook) {
-        console.log("Outlook add-in loaded");
-      }
-    });
-  </script>
+  <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js" defer></script>
 </head>
 <body>
-  <!-- This file is required to initialize Office.js for the ribbon button -->
+  <script>
+    // Wait until Office.js is ready
+    if (window.Office) {
+      Office.onReady(info => {
+        if (info.host === Office.HostType.Outlook) {
+          console.log("Outlook add-in loaded (function file)");
+        }
+      });
+    } else {
+      console.error("Office.js not loaded yet.");
+    }
+  </script>
 </body>
 </html>
