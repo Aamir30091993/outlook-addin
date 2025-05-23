@@ -13,7 +13,7 @@ Office.onReady((info) => {
   }
 });
 
-export async function run() {
+  async function run() {
   const item = Office.context.mailbox.item;
   const insertAt = document.getElementById("item-subject");
 
