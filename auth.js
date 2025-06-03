@@ -11,13 +11,39 @@ const loginRequest = {
   scopes: ["User.Read", "Mail.Read"]
 };
 
-(async function () {
+Office.onReady(async () => {
   try {
-    const response = await msalInstance.loginPopup(loginRequest);
-    const token = response.accessToken;
-    Office.context.ui.messageParent(token);
+    // Handle redirect response after login
+    const response = await msalInstance.handleRedirectPromise();
+
+    if (response) {
+      // We got a response after redirect login
+      const token = response.accessToken;
+
+      if (
+        Office &&
+        Office.context &&
+        Office.context.ui &&
+        typeof Office.context.ui.messageParent === "function"
+      ) {
+        Office.context.ui.messageParent(token);
+      } else {
+        console.warn("Office.context.ui.messageParent is not available.");
+      }
+    } else {
+      // No response yet — trigger redirect login
+      await msalInstance.loginRedirect(loginRequest);
+      // The page will redirect, so code after this usually won't run
+    }
   } catch (e) {
     console.error("Login failed:", e);
-    Office.context.ui.messageParent("ERROR:" + e.message);
+    if (
+      Office &&
+      Office.context &&
+      Office.context.ui &&
+      typeof Office.context.ui.messageParent === "function"
+    ) {
+      Office.context.ui.messageParent("ERROR:" + e.message);
+    }
   }
-})();
+});
