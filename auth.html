@@ -1,16 +1,18 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <title>Authenticate</title>
-  <!-- ✅ Load Office.js to enable Office.context -->
+
+  <!-- 1. Load Office.js so that Office.context.ui.messageParent is available -->
   <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
-  <!-- ✅ Load MSAL.js -->
+  <!-- 2. Load MSAL.js (browser bundle) -->
   <script src="https://alcdn.msauth.net/browser/2.35.0/js/msal-browser.min.js"></script>
-  <!-- ✅ Your auth logic -->
-  <script src="https://Aamir30091993.github.io/outlook-addin/auth.js"></script>
+  <!-- 3. Load your auth logic (loginPopup + messageParent) -->
+  <script src="https://aamir30091993.github.io/outlook-addin/auth.js"></script>
 </head>
+
 <body>
-  <h3>Signing you in...</h3>
+  <h3>Signing you in…</h3>
 </body>
 </html>

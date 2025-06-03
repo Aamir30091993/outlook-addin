@@ -7,8 +7,13 @@ Office.onReady((info) => {
     document.getElementById("sideload-msg").style.display = "none";
     document.getElementById("app-body").style.display = "flex";
     document.getElementById("run").onclick = async () => {
-      await loginWithDialog();
-      run();
+      try {
+        const token = await loginWithDialog();
+        console.log("Token received in taskpane.js:", token);
+        run();
+      } catch (error) {
+        console.error("Login failed or dialog error:", error);
+      }
     };
   }
 });
@@ -17,7 +22,7 @@ function loginWithDialog() {
   return new Promise((resolve, reject) => {
     Office.context.ui.displayDialogAsync(
       "https://aamir30091993.github.io/outlook-addin/auth.html",
-      { height: 60, width: 30, displayInIframe: true },
+      { height: 60, width: 30 },  // Removed displayInIframe option here
       function (asyncResult) {
         if (asyncResult.status === Office.AsyncResultStatus.Failed) {
           reject(asyncResult.error.message);
@@ -26,7 +31,10 @@ function loginWithDialog() {
           authDialog.addEventHandler(Office.EventType.DialogMessageReceived, (arg) => {
             console.log("Token received:", arg.message);
             authDialog.close();
-            resolve(arg.message); // access_token
+            resolve(arg.message); // this is your access token or error message
+          });
+          authDialog.addEventHandler(Office.EventType.DialogEventReceived, (arg) => {
+            console.warn("Dialog event received:", arg.error);
           });
         }
       }
