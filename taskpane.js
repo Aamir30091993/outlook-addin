@@ -1,47 +1,40 @@
-/* global document, Office, msal */
+/* global Office, document */
+
+let authDialog;
 
 Office.onReady((info) => {
   if (info.host === Office.HostType.Outlook) {
     document.getElementById("sideload-msg").style.display = "none";
     document.getElementById("app-body").style.display = "flex";
-
-    // ✅ Trigger login and run logic only when user clicks the button
     document.getElementById("run").onclick = async () => {
-      await initializeApp();
+      await loginWithDialog();
       run();
     };
   }
 });
 
-async function initializeApp() {
-  const msalConfig = {
-    auth: {
-      clientId: "c43fd9f3-f6a6-4b18-88e6-ee64e05db94e",
-      authority: "https://login.microsoftonline.com/common",
-      redirectUri: "https://aamir30091993.github.io/outlook-addin/taskpane.html"
-    }
-  };
-
-  const msalInstance = new msal.PublicClientApplication(msalConfig);
-  const loginRequest = {
-    scopes: ["User.Read", "Mail.Read"]
-  };
-
-  try {
-    const accounts = msalInstance.getAllAccounts();
-    let response;
-    if (accounts.length > 0) {
-      response = await msalInstance.acquireTokenSilent({ ...loginRequest, account: accounts[0] });
-    } else {
-      response = await msalInstance.loginPopup(loginRequest);
-    }
-    console.log("Access token:", response.accessToken);
-  } catch (error) {
-    console.error("Auth error:", error);
-  }
+function loginWithDialog() {
+  return new Promise((resolve, reject) => {
+    Office.context.ui.displayDialogAsync(
+      "https://aamir30091993.github.io/outlook-addin/auth.html",
+      { height: 60, width: 30, displayInIframe: true },
+      function (asyncResult) {
+        if (asyncResult.status === Office.AsyncResultStatus.Failed) {
+          reject(asyncResult.error.message);
+        } else {
+          authDialog = asyncResult.value;
+          authDialog.addEventHandler(Office.EventType.DialogMessageReceived, (arg) => {
+            console.log("Token received:", arg.message);
+            authDialog.close();
+            resolve(arg.message); // access_token
+          });
+        }
+      }
+    );
+  });
 }
 
-async function run() {
+function run() {
   const item = Office.context.mailbox.item;
   const insertAt = document.getElementById("item-subject");
   insertAt.innerHTML = "";
@@ -62,18 +55,6 @@ async function run() {
 
   insertAt.appendChild(document.createTextNode("Item Type: " + (item.itemType || "Unknown")));
   insertAt.appendChild(document.createElement("br"));
-
-  if (item.body && item.body.getAsync) {
-    item.body.getAsync(Office.CoercionType.Text, result => {
-      if (result.status === Office.AsyncResultStatus.Succeeded) {
-        insertAt.appendChild(document.createTextNode("Body (Compose mode): " + result.value));
-        insertAt.appendChild(document.createElement("br"));
-      } else {
-        insertAt.appendChild(document.createTextNode("Error reading body: " + result.error.message));
-        insertAt.appendChild(document.createElement("br"));
-      }
-    });
-  }
 
   if (item.from && item.from.emailAddress) {
     insertAt.appendChild(document.createTextNode("From: " + item.from.emailAddress));
