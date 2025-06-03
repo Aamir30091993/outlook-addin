@@ -2,10 +2,14 @@
 
 Office.onReady((info) => {
   if (info.host === Office.HostType.Outlook) {
-    initializeApp();
     document.getElementById("sideload-msg").style.display = "none";
     document.getElementById("app-body").style.display = "flex";
-    document.getElementById("run").onclick = run;
+
+    // ✅ Trigger login and run logic only when user clicks the button
+    document.getElementById("run").onclick = async () => {
+      await initializeApp();
+      run();
+    };
   }
 });
 
