@@ -2,7 +2,7 @@ const msalConfig = {
   auth: {
     clientId: "c43fd9f3-f6a6-4b18-88e6-ee64e05db94e",
     authority: "https://login.microsoftonline.com/common",
-    redirectUri: "https://aamir30091993.github.io/outlook-addin/auth.html"
+    redirectUri: "https://aamir30091993.github.io/outlook-addin/auth.html" // Must exactly match your Azure AD app registration
   }
 };
 
@@ -13,11 +13,11 @@ const loginRequest = {
 
 Office.onReady(async () => {
   try {
-    // Handle redirect response after login
+    // Handle redirect response after login (when redirected back from Microsoft)
     const response = await msalInstance.handleRedirectPromise();
 
     if (response) {
-      // We got a response after redirect login
+      // Login success - get access token
       const token = response.accessToken;
 
       if (
@@ -31,12 +31,13 @@ Office.onReady(async () => {
         console.warn("Office.context.ui.messageParent is not available.");
       }
     } else {
-      // No response yet — trigger redirect login
+      // No login response yet - trigger redirect login
       await msalInstance.loginRedirect(loginRequest);
-      // The page will redirect, so code after this usually won't run
+      // After this line, the page will redirect to Microsoft login and then back to redirectUri
     }
   } catch (e) {
     console.error("Login failed:", e);
+
     if (
       Office &&
       Office.context &&
