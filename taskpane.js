@@ -1,13 +1,42 @@
 /* global document, Office */
-
+import { PublicClientApplication } from "@azure/msal-browser";
 
 Office.onReady((info) => {
   if (info.host === Office.HostType.Outlook) {
+  initializeApp();  
   document.getElementById("sideload-msg").style.display = "none";
   document.getElementById("app-body").style.display = "flex";
   document.getElementById("run").onclick = run;
   }
 });
+
+async function initializeApp() {
+  const msalConfig = {
+    auth: {
+      clientId: "c43fd9f3-f6a6-4b18-88e6-ee64e05db94e",
+      authority: "https://login.microsoftonline.com/common",
+      redirectUri: "https://Aamir30091993.github.io/outlook-addin/taskpane.html"
+    }
+  };
+
+  const msalInstance = new PublicClientApplication(msalConfig);
+  const loginRequest = {
+    scopes: ["User.Read", "Mail.Read"]
+  };
+
+  try {
+    const accounts = msalInstance.getAllAccounts();
+    let response;
+    if (accounts.length > 0) {
+      response = await msalInstance.acquireTokenSilent({ ...loginRequest, account: accounts[0] });
+    } else {
+      response = await msalInstance.loginPopup(loginRequest);
+    }
+    console.log("Access token:", response.accessToken);
+  } catch (error) {
+    console.error("Auth error:", error);
+  }
+}
 
 async function run() {
   const item = Office.context.mailbox.item;
