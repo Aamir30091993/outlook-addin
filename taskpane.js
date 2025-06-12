@@ -43,7 +43,7 @@ function loginWithDialog() {
 }
 
 function run() {
-  const item = Office.context.mailbox.item;
+/*   const item = Office.context.mailbox.item;
   const insertAt = document.getElementById("item-subject");
   insertAt.innerHTML = "";
 
@@ -67,7 +67,7 @@ function run() {
   if (item.from && item.from.emailAddress) {
     insertAt.appendChild(document.createTextNode("From: " + item.from.emailAddress));
     insertAt.appendChild(document.createElement("br"));
-  }
+  } */
   
   const iframe = document.getElementById("webFrame");
   iframe.src = "https://www.google.com/"; // Replace with your page URL
