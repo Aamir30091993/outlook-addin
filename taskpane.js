@@ -68,4 +68,7 @@ function run() {
     insertAt.appendChild(document.createTextNode("From: " + item.from.emailAddress));
     insertAt.appendChild(document.createElement("br"));
   }
+  
+  const iframe = document.getElementById("webFrame");
+  iframe.src = "https://www.google.com/"; // Replace with your page URL
 }
