@@ -70,5 +70,5 @@ function run() {
   } */
   
   const iframe = document.getElementById("webFrame");
-  iframe.src = "https://www.google.com/"; // Replace with your page URL
+  iframe.src = "https://github.com/Aamir30091993/outlook-addin/"; // Replace with your page URL
 }
