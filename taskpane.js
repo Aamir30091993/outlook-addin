@@ -104,11 +104,11 @@ async function callWebService(username) {
 
     // console.log("Received token data:", result);
 	
-	const json = webPostMethod(postData, URL)
+	const json = await webPostMethod(postData, URL);
 	
 	const result = JSON.parse(json);
 
-	 if (result != "")
+	 if (result)
 	 {
 		// Store token data in localStorage or a secure place
 		localStorage.setItem("Token", result.Token);
@@ -129,7 +129,7 @@ async function callWebService(username) {
     console.error("Error in callWebService:", err);
 
     // Display fallback UI in taskpane
-    document.getElementById("errorDisplay").innerText = "Login failed or network error.";
+   // document.getElementById("errorDisplay").innerText = "Login failed or network error.";
     return null;
   }
 }
