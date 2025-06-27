@@ -106,7 +106,21 @@ async function callWebService(username) {
 	
 	const json = await webPostMethod(postData, URL);
 	
-	const result = JSON.parse(json);
+	if (!json || json.trim() === "") {
+		console.warn("Empty or invalid response from API.");
+	  //document.getElementById("errorDisplay").innerText = "Login failed or server returned empty.";
+		return null;
+    }
+	
+	
+	let result;
+	try {
+	  result = JSON.parse(json);
+	} catch (e) {
+	  console.error("Invalid JSON format:", json);
+	  document.getElementById("errorDisplay").innerText = "Login failed: invalid server response.";
+	  return null;
+}
 
 	 if (result)
 	 {
