@@ -99,7 +99,7 @@ async function callWebService(username) {
       // return null;
     // }
 
-    Convert JSON to XML if needed, or parse as JSON directly:
+    //Convert JSON to XML if needed, or parse as JSON directly:
     // const result = JSON.parse(resultText);
 
     // console.log("Received token data:", result);
