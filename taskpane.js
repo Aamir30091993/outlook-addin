@@ -152,36 +152,27 @@ async function webPostMethod(postData, url) {
   console.log("Entered webPostMethod()");
   let responseText = "";
 
-  try {
-    // Set a timeout (like in .Timeout = 50000 ms in C#)
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 50000);
+    try {
+    const proxyUrl = "https://corsproxy.io/?";
+    const finalUrl = proxyUrl + encodeURIComponent(url);
 
-    const response = await fetch(url, {
+    const response = await fetch(finalUrl, {
       method: "POST",
       headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        "User-Agent": "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 7.1; Trident/5.0)",
-        "Accept": "*/*"
+        "Content-Type": "application/x-www-form-urlencoded"
       },
-      body: new URLSearchParams(postData),
-      signal: controller.signal
+      body: new URLSearchParams(postData)
     });
-
-    clearTimeout(timeoutId);
 
     if (!response.ok) {
       console.error("Response status not OK:", response.status);
-      //displayNetworkErrorUI(); // See below
       return "";
     }
 
     responseText = await response.text();
     console.log("Response from server:", responseText);
-
   } catch (error) {
     console.error("Exception in webPostMethod():", error.message);
-    //displayNetworkErrorUI();
   }
 
   return responseText;
