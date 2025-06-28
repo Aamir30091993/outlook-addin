@@ -152,7 +152,7 @@ async function webPostMethod(postData, url) {
   console.log("Entered webPostMethod()");
   let responseText = "";
 
-    try {
+  try {
     const proxyUrl = "https://corsproxy.io/?";
     const finalUrl = proxyUrl + encodeURIComponent(url);
 
@@ -161,7 +161,7 @@ async function webPostMethod(postData, url) {
       headers: {
         "Content-Type": "application/x-www-form-urlencoded"
       },
-      body: new URLSearchParams(postData)
+      body: postData // don't wrap it again!
     });
 
     if (!response.ok) {
