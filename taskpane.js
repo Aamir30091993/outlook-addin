@@ -121,7 +121,7 @@ async function callWebService(username) {
 	   //calling the webpage part
 	   
 	      const iframe = document.getElementById("webFrame");
-          iframe.src = "https://uat-uae-ezconnect.colliersasia.com/?tokenID=" + encodeURIComponent(tokenID) + "&instanceID=0";
+          iframe.src = "https://uat-uae-ezconnect.colliersasia.com/?tokenID=" + encodeURIComponent(retrievedTokenID) + "&instanceID=0";
 	   
 	   
 
