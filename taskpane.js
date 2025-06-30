@@ -44,6 +44,8 @@ function loginWithDialog() {
 
 function run() {
   callWebService("aamir.s@colliers.com");
+  
+  
 }
 
 async function callWebService(username) {
@@ -82,7 +84,7 @@ async function callWebService(username) {
       // Setting a value in localStorage	  
 	   	
       localStorage.setItem("Token", result.token);
-      localStorage.setItem("TokenID", result.tokenID);
+      localStorage.setItem("TokenID", result.tokenid);
       localStorage.setItem("UserID", result.userID);
       localStorage.setItem("CountryID", result.countryID);
       localStorage.setItem("Lang", result.lang);
@@ -115,6 +117,13 @@ async function callWebService(username) {
 	   
 	   const retrievedUserName = localStorage.getItem("UserName");	
        console.log(retrievedUserName);
+	   
+	   //calling the webpage part
+	   
+	      const iframe = document.getElementById("webFrame");
+          iframe.src = "https://uat-uae-ezconnect.colliersasia.com/?tokenID=" + encodeURIComponent(tokenID) + "&instanceID=0";
+	   
+	   
 
     return "";
 
