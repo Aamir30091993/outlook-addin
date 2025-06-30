@@ -1,7 +1,7 @@
 /* global Office, document */
 
 let authDialog;
-const retrievedTokenID = "";
+let retrievedTokenID = "";
 
 Office.onReady((info) => {
   if (info.host === Office.HostType.Outlook) {
@@ -13,15 +13,7 @@ Office.onReady((info) => {
         console.log("Token received in taskpane.js:", token);
         run();
 		
-		document.querySelector("header").style.display = "none";
-        document.getElementById("run").style.display = "none";
-        document.getElementById("sideload-msg").style.display = "none";
 
-        const iframe = document.getElementById("webFrame");
-        iframe.style.display = "block";
-	
-	    //calling the webpage part	   	 
-        iframe.src = "https://uat-uae-ezconnect.colliersasia.com/?tokenID=" + encodeURIComponent(retrievedTokenID) + "&instanceID=0";
 		
 		
       } catch (error) {
@@ -56,8 +48,17 @@ function loginWithDialog() {
 }
 
 function run() {
-  callWebService("aamir.s@colliers.com");
-  
+    callWebService("aamir.s@colliers.com");
+
+	document.querySelector("header").style.display = "none";
+	document.getElementById("run").style.display = "none";
+	document.getElementById("sideload-msg").style.display = "none";
+
+	const iframe = document.getElementById("webFrame");
+	iframe.style.display = "block";
+
+	//calling the webpage part	   	 
+	iframe.src = "https://uat-uae-ezconnect.colliersasia.com/?tokenID=" + encodeURIComponent(retrievedTokenID) + "&instanceID=0";
   
 }
 
