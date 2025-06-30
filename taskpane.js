@@ -57,6 +57,8 @@ async function callWebService(username) {
     const url = "https://uat-uae-ezconnect.colliersasia.com/api/Token?";
 
     const json = await webPostMethod(postData, url);
+	
+	console.log(json);
 
     if (!json || json.trim() === "") {
       console.warn("Empty or invalid response from API.");
@@ -70,8 +72,13 @@ async function callWebService(username) {
       console.error("Invalid JSON format:", json);
       return null;
     }
+	
+	console.log(result);
 
     if (result) {
+	
+      console.log("inside if result()");	
+		
       localStorage.setItem("Token", result.Token);
       localStorage.setItem("TokenID", result.TokenID);
       localStorage.setItem("UserID", result.UserID);
@@ -81,6 +88,8 @@ async function callWebService(username) {
       localStorage.setItem("Status", result.Status);
       localStorage.setItem("UserName", result.UserName);
     }
+	
+	console.log(localStorage);
 
     return "";
 
