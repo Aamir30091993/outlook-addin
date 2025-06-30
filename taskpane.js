@@ -19,9 +19,7 @@ Office.onReady((info) => {
         const iframe = document.getElementById("webFrame");
         iframe.style.display = "block";
 	
-	    //calling the webpage part
-	   
-	    const iframe = document.getElementById("webFrame");
+	    //calling the webpage part	   	 
         iframe.src = "https://uat-uae-ezconnect.colliersasia.com/?tokenID=" + encodeURIComponent(retrievedTokenID) + "&instanceID=0";
 		
 		
