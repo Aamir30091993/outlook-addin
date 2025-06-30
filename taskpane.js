@@ -81,14 +81,14 @@ async function callWebService(username) {
 	  
       // Setting a value in localStorage	  
 	   	
-      localStorage.setItem("Token", result.Token);
-      localStorage.setItem("TokenID", result.TokenID);
-      localStorage.setItem("UserID", result.UserID);
-      localStorage.setItem("CountryID", result.CountryID);
-      localStorage.setItem("Lang", result.Lang);
-      localStorage.setItem("OrgSlID", result.OrgSlID);
-      localStorage.setItem("Status", result.Status);
-      localStorage.setItem("UserName", result.UserName);
+      localStorage.setItem("Token", result.token);
+      localStorage.setItem("TokenID", result.tokenID);
+      localStorage.setItem("UserID", result.userID);
+      localStorage.setItem("CountryID", result.countryID);
+      localStorage.setItem("Lang", result.lang);
+      localStorage.setItem("OrgSlID", result.orgSlID);
+      localStorage.setItem("Status", result.status);
+      localStorage.setItem("UserName", result.userName);
     }
 	
 	// Getting the value from localStorage
