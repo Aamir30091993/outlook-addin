@@ -2,9 +2,13 @@
 
 let authDialog;
 let retrievedTokenID;
+let userEmail;
 
 Office.onReady((info) => {
   if (info.host === Office.HostType.Outlook) {
+	userEmail = Office.context.mailbox.userProfile.emailAddress;
+	console.log("userEmail");
+	console.log(userEmail);
     document.getElementById("sideload-msg").style.display = "none";
     document.getElementById("app-body").style.display = "flex";
     document.getElementById("run").onclick = async () => {
@@ -45,7 +49,7 @@ function loginWithDialog() {
 }
 
 async function run() {
-    await callWebService("aamir.s@colliers.com"); // ✅ Wait until token is set
+    await callWebService("aamir.s@colliers.com"); //TODO - To replace harcoded value with variable "userEmail" // ✅ Wait until token is set
 
 	document.querySelector("header").style.display = "none";
 	document.getElementById("run").style.display = "none";
