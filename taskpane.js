@@ -78,7 +78,9 @@ async function callWebService(username) {
     if (result) {
 	
       console.log("inside if result()");	
-		
+	  
+      // Setting a value in localStorage	  
+	   	
       localStorage.setItem("Token", result.Token);
       localStorage.setItem("TokenID", result.TokenID);
       localStorage.setItem("UserID", result.UserID);
@@ -89,7 +91,30 @@ async function callWebService(username) {
       localStorage.setItem("UserName", result.UserName);
     }
 	
-	console.log(localStorage);
+	// Getting the value from localStorage
+       const retrievedToken = localStorage.getItem("Token");	
+       console.log(retrievedToken);
+	   
+	   const retrievedTokenID = localStorage.getItem("TokenID");	
+       console.log(retrievedTokenID);
+	   
+	   const retrievedUserID = localStorage.getItem("UserID");	
+       console.log(retrievedUserID);
+	   
+	   const retrievedCountryID = localStorage.getItem("CountryID");	
+       console.log(retrievedCountryID);
+	   
+	   const retrievedLang = localStorage.getItem("Lang");	
+       console.log(retrievedLang);
+	   
+	   const retrievedOrgSlID = localStorage.getItem("OrgSlID");	
+       console.log(retrievedOrgSlID);
+	   
+	   const retrievedStatus = localStorage.getItem("Status");	
+       console.log(retrievedStatus);
+	   
+	   const retrievedUserName = localStorage.getItem("UserName");	
+       console.log(retrievedUserName);
 
     return "";
 
