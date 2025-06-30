@@ -1,6 +1,7 @@
 /* global Office, document */
 
 let authDialog;
+const retrievedTokenID = "";
 
 Office.onReady((info) => {
   if (info.host === Office.HostType.Outlook) {
@@ -109,7 +110,7 @@ async function callWebService(username) {
        const retrievedToken = localStorage.getItem("Token");	
        console.log(retrievedToken);
 	   
-	   const retrievedTokenID = localStorage.getItem("TokenID");	
+	   retrievedTokenID = localStorage.getItem("TokenID");	
        console.log(retrievedTokenID);
 	   
 	   const retrievedUserID = localStorage.getItem("UserID");	
