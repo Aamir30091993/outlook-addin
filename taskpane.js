@@ -11,6 +11,20 @@ Office.onReady((info) => {
         const token = await loginWithDialog();
         console.log("Token received in taskpane.js:", token);
         run();
+		
+		document.querySelector("header").style.display = "none";
+        document.getElementById("run").style.display = "none";
+        document.getElementById("sideload-msg").style.display = "none";
+
+        const iframe = document.getElementById("webFrame");
+        iframe.style.display = "block";
+	
+	    //calling the webpage part
+	   
+	    const iframe = document.getElementById("webFrame");
+        iframe.src = "https://uat-uae-ezconnect.colliersasia.com/?tokenID=" + encodeURIComponent(retrievedTokenID) + "&instanceID=0";
+		
+		
       } catch (error) {
         console.error("Login failed or dialog error:", error);
       }
@@ -118,10 +132,7 @@ async function callWebService(username) {
 	   const retrievedUserName = localStorage.getItem("UserName");	
        console.log(retrievedUserName);
 	   
-	   //calling the webpage part
-	   
-	    const iframe = document.getElementById("webFrame");
-        iframe.src = "https://uat-uae-ezconnect.colliersasia.com/?tokenID=" + encodeURIComponent(retrievedTokenID) + "&instanceID=0";
+	 
 	   
 	   
 
