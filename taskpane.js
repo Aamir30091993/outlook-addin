@@ -44,7 +44,7 @@ function loginWithDialog() {
   });
 }
 
-function run() {
+async function run() {
     await callWebService("aamir.s@colliers.com"); // ✅ Wait until token is set
 
 	document.querySelector("header").style.display = "none";
