@@ -1,7 +1,7 @@
 /* global Office, document */
 
 let authDialog;
-let retrievedTokenID = "";
+let retrievedTokenID;
 
 Office.onReady((info) => {
   if (info.host === Office.HostType.Outlook) {
