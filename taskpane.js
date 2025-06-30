@@ -56,6 +56,11 @@ function run() {
 
 	const iframe = document.getElementById("webFrame");
 	iframe.style.display = "block";
+	
+	console.log("retrievedTokenID");
+	console.log(retrievedTokenID);
+	console.log(" EncodedURIComponent retrievedTokenID");
+	console.log(encodeURIComponent(retrievedTokenID));
 
 	//calling the webpage part	   	 
 	iframe.src = "https://uat-uae-ezconnect.colliersasia.com/?tokenID=" + encodeURIComponent(retrievedTokenID) + "&instanceID=0";
