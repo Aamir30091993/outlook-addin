@@ -11,11 +11,8 @@ Office.onReady((info) => {
       try {
         const token = await loginWithDialog();
         console.log("Token received in taskpane.js:", token);
-        run();
-		
-
-		
-		
+        await run(); // ✅ Await run()
+	 
       } catch (error) {
         console.error("Login failed or dialog error:", error);
       }
@@ -48,17 +45,20 @@ function loginWithDialog() {
 }
 
 function run() {
-    callWebService("aamir.s@colliers.com");
+    await callWebService("aamir.s@colliers.com"); // ✅ Wait until token is set
 
 	document.querySelector("header").style.display = "none";
 	document.getElementById("run").style.display = "none";
 	document.getElementById("sideload-msg").style.display = "none";
 
+    // ✅ Set after the token is stored
 	const iframe = document.getElementById("webFrame");
 	iframe.style.display = "block";
 	
-	console.log("retrievedTokenID");
-	console.log(retrievedTokenID);
+	 // ✅ Now retrievedTokenID is set correctly
+    retrievedTokenID = localStorage.getItem("TokenID");
+    console.log("Setting iframe with tokenID:", retrievedTokenID);
+	
 	console.log(" EncodedURIComponent retrievedTokenID");
 	console.log(encodeURIComponent(retrievedTokenID));
 
