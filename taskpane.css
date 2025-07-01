@@ -31,24 +31,24 @@
 	
 .logout-btn {
   position: absolute;
-  top: 16px;     /* adjust as needed */
-  right: 16px;   /* adjust as needed */
-  z-index: 2;
+  top: 16px;
+  right: 16px;
   padding: 8px 14px;
   background-color: #d83b01;
-  color: #fff;
+  color: white;
   border: none;
   border-radius: 4px;
   font-size: 13px;
   cursor: pointer;
   box-shadow: 0 2px 5px rgba(0,0,0,0.2);
   transition: background-color 0.2s ease;
+  display: none;  /* initial hidden; show via JS */
+  z-index: 1000;  /* ensure on top */
 }
 
 .logout-btn:hover {
   background-color: #b23200;
 }
- 
  ul {
      margin: 0;
      padding: 0;
