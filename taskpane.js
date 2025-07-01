@@ -32,6 +32,18 @@ Office.onReady((info) => {
   }
 });
 
+document.getElementById("logout").onclick = () => {
+  console.log("Logging out...");
+  localStorage.clear();
+
+  // Show welcome UI again
+  document.querySelector("header").style.display = "block";
+  document.getElementById("run").style.display = "block";
+  document.getElementById("logout").style.display = "none";
+  document.getElementById("webFrame").style.display = "none";
+  document.getElementById("webFrame").src = "";
+};
+
 function loginWithDialog() {
   return new Promise((resolve, reject) => {
     Office.context.ui.displayDialogAsync(
@@ -63,6 +75,7 @@ async function run() {
 
   document.querySelector("header").style.display = "none";
   document.getElementById("run").style.display = "none";
+  document.getElementById("logout").style.display = "block"; // ✅
   document.getElementById("sideload-msg").style.display = "none";
   iframe.style.display = "block";
 
@@ -76,6 +89,7 @@ async function run() {
 function runWithToken(tokenID) {
   document.querySelector("header").style.display = "none";
   document.getElementById("run").style.display = "none";
+   document.getElementById("logout").style.display = "block"; // ✅ Fix added
   document.getElementById("sideload-msg").style.display = "none";
 
   const iframe = document.getElementById("webFrame");
