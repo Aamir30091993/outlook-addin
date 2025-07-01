@@ -18,6 +18,7 @@ Office.onReady((info) => {
 
         if (existingTokenID) {
           console.log("TokenID found in localStorage. Skipping Azure login.");
+		  console.log(existingTokenID);
           runWithToken(existingTokenID);
         } else {
           const token = await loginWithDialog();
