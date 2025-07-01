@@ -31,10 +31,10 @@
 	
 .logout-btn {
   display: none;       /* hidden until JS shows it */
-  position: absolute;
+  position: relative;
   top: 16px;
-  right: 16px;
-  padding: 8px 14px;
+  right: -119px;
+  padding: 3px 5px;
   background-color: #d83b01;
   color: white;
   border: none;
