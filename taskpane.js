@@ -82,7 +82,7 @@ async function run() {
   document.getElementById("run").style.display = "none";
   document.getElementById("logout").style.display = "block"; // ✅
   document.getElementById("sideload-msg").style.display = "none";
-  iframe.style.display = "block";
+  iframe.style.display = "block";	
 
   retrievedTokenID = localStorage.getItem("TokenID");
   console.log("Setting iframe with tokenID:", retrievedTokenID);
