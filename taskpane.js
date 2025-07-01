@@ -6,17 +6,24 @@ let userEmail;
 
 Office.onReady((info) => {
   if (info.host === Office.HostType.Outlook) {
-	userEmail = Office.context.mailbox.userProfile.emailAddress;
-	console.log("userEmail");
-	console.log(userEmail);
+    userEmail = Office.context.mailbox.userProfile.emailAddress;
+    console.log("userEmail:", userEmail);
+
     document.getElementById("sideload-msg").style.display = "none";
     document.getElementById("app-body").style.display = "flex";
+
     document.getElementById("run").onclick = async () => {
       try {
-        const token = await loginWithDialog();
-        console.log("Token received in taskpane.js:", token);
-        await run(); // ✅ Await run()
-	 
+        const existingTokenID = localStorage.getItem("TokenID");
+
+        if (existingTokenID) {
+          console.log("TokenID found in localStorage. Skipping Azure login.");
+          runWithToken(existingTokenID);
+        } else {
+          const token = await loginWithDialog();
+          console.log("Token received in taskpane.js:", token);
+          await run();
+        }
       } catch (error) {
         console.error("Login failed or dialog error:", error);
       }
@@ -49,26 +56,31 @@ function loginWithDialog() {
 }
 
 async function run() {
-    await callWebService("aamir.s@colliers.com"); //TODO - To replace harcoded value with variable "userEmail" // ✅ Wait until token is set
+  await callWebService("aamir.s"); //userEmail // ✅ Replaced hardcoded email
 
-	document.querySelector("header").style.display = "none";
-	document.getElementById("run").style.display = "none";
-	document.getElementById("sideload-msg").style.display = "none";
+  const iframe = document.getElementById("webFrame");
 
-    // ✅ Set after the token is stored
-	const iframe = document.getElementById("webFrame");
-	iframe.style.display = "block";
-	
-	 // ✅ Now retrievedTokenID is set correctly
-    retrievedTokenID = localStorage.getItem("TokenID");
-    console.log("Setting iframe with tokenID:", retrievedTokenID);
-	
-	console.log(" EncodedURIComponent retrievedTokenID");
-	console.log(encodeURIComponent(retrievedTokenID));
+  document.querySelector("header").style.display = "none";
+  document.getElementById("run").style.display = "none";
+  document.getElementById("sideload-msg").style.display = "none";
+  iframe.style.display = "block";
 
-	//calling the webpage part	   	 
-	iframe.src = "https://uat-uae-ezconnect.colliersasia.com/?tokenID=" + encodeURIComponent(retrievedTokenID) + "&instanceID=0";
-  
+  retrievedTokenID = localStorage.getItem("TokenID");
+  console.log("Setting iframe with tokenID:", retrievedTokenID);
+
+ iframe.src = "https://uat-uae-ezconnect.colliersasia.com/?tokenID=" + encodeURIComponent(retrievedTokenID) + "&instanceID=0";
+}
+
+// 🔁 Reused when token already exists
+function runWithToken(tokenID) {
+  document.querySelector("header").style.display = "none";
+  document.getElementById("run").style.display = "none";
+  document.getElementById("sideload-msg").style.display = "none";
+
+  const iframe = document.getElementById("webFrame");
+  iframe.style.display = "block";
+
+ iframe.src = "https://uat-uae-ezconnect.colliersasia.com/?tokenID=" + encodeURIComponent(tokenID) + "&instanceID=0";
 }
 
 async function callWebService(username) {
@@ -82,8 +94,7 @@ async function callWebService(username) {
     const url = "https://uat-uae-ezconnect.colliersasia.com/api/Token?";
 
     const json = await webPostMethod(postData, url);
-	
-	console.log(json);
+    console.log(json);
 
     if (!json || json.trim() === "") {
       console.warn("Empty or invalid response from API.");
@@ -97,15 +108,8 @@ async function callWebService(username) {
       console.error("Invalid JSON format:", json);
       return null;
     }
-	
-	console.log(result);
 
     if (result) {
-	
-      console.log("inside if result()");	
-	  
-      // Setting a value in localStorage	  
-	   	
       localStorage.setItem("Token", result.token);
       localStorage.setItem("TokenID", result.tokenid);
       localStorage.setItem("UserID", result.userID);
@@ -115,38 +119,8 @@ async function callWebService(username) {
       localStorage.setItem("Status", result.status);
       localStorage.setItem("UserName", result.userName);
     }
-	
-	// Getting the value from localStorage
-       const retrievedToken = localStorage.getItem("Token");	
-       console.log(retrievedToken);
-	   
-	   retrievedTokenID = localStorage.getItem("TokenID");	
-       console.log(retrievedTokenID);
-	   
-	   const retrievedUserID = localStorage.getItem("UserID");	
-       console.log(retrievedUserID);
-	   
-	   const retrievedCountryID = localStorage.getItem("CountryID");	
-       console.log(retrievedCountryID);
-	   
-	   const retrievedLang = localStorage.getItem("Lang");	
-       console.log(retrievedLang);
-	   
-	   const retrievedOrgSlID = localStorage.getItem("OrgSlID");	
-       console.log(retrievedOrgSlID);
-	   
-	   const retrievedStatus = localStorage.getItem("Status");	
-       console.log(retrievedStatus);
-	   
-	   const retrievedUserName = localStorage.getItem("UserName");	
-       console.log(retrievedUserName);
-	   
-	 
-	   
-	   
 
     return "";
-
   } catch (err) {
     console.error("Error in callWebService:", err);
     return null;
@@ -155,15 +129,13 @@ async function callWebService(username) {
 
 async function webPostMethod(postData, url) {
   console.log("Entered webPostMethod()");
-  let responseText = "";
-
   try {
     const response = await fetch(url, {
       method: "POST",
       headers: {
-        "Content-Type": "application/x-www-form-urlencoded"
+        "Content-Type": "application/x-www-form-urlencoded",
       },
-      body: postData
+      body: postData,
     });
 
     if (!response.ok) {
@@ -171,11 +143,11 @@ async function webPostMethod(postData, url) {
       return "";
     }
 
-    responseText = await response.text();
+    const responseText = await response.text();
     console.log("Response from server:", responseText);
+    return responseText;
   } catch (error) {
     console.error("Exception in webPostMethod():", error.message);
+    return "";
   }
-
-  return responseText;
 }
