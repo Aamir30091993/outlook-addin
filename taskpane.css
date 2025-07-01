@@ -30,6 +30,7 @@
     }
 	
 .logout-btn {
+  display: none;       /* hidden until JS shows it */
   position: absolute;
   top: 16px;
   right: 16px;
@@ -38,14 +39,10 @@
   color: white;
   border: none;
   border-radius: 4px;
-  font-size: 13px;
   cursor: pointer;
   box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-  transition: background-color 0.2s ease;
-  display: none;  /* initial hidden; show via JS */
-  z-index: 1000;  /* ensure on top */
+  z-index: 1000;
 }
-
 .logout-btn:hover {
   background-color: #b23200;
 }
