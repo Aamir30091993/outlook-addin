@@ -6,6 +6,21 @@ let userEmail;
 
 Office.onReady((info) => {
   if (info.host === Office.HostType.Outlook) {
+	  
+	  //Logout
+	  document.getElementById("logout").onclick = () => {
+	  console.log("Logging out...");
+	  localStorage.clear();
+
+	  // Show welcome UI again
+	  document.querySelector("header").style.display = "block";
+	  document.getElementById("run").style.display = "block";
+	  document.getElementById("logout").style.display = "none";
+	  document.getElementById("webFrame").style.display = "none";
+	  document.getElementById("webFrame").src = "";
+	};
+	//Logout
+	  
     userEmail = Office.context.mailbox.userProfile.emailAddress;
     console.log("userEmail:", userEmail);
 
@@ -32,17 +47,7 @@ Office.onReady((info) => {
   }
 });
 
-document.getElementById("logout").onclick = () => {
-  console.log("Logging out...");
-  localStorage.clear();
 
-  // Show welcome UI again
-  document.querySelector("header").style.display = "block";
-  document.getElementById("run").style.display = "block";
-  document.getElementById("logout").style.display = "none";
-  document.getElementById("webFrame").style.display = "none";
-  document.getElementById("webFrame").src = "";
-};
 
 function loginWithDialog() {
   return new Promise((resolve, reject) => {

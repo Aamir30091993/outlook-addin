@@ -28,6 +28,25 @@
 	  display: none; /* Hidden initially */
 	  flex: 1;
     }
+	
+  #logout {
+    display: none;
+    float: right;
+    margin: 10px 20px 0 0;
+    padding: 8px 16px;
+    background-color: #d83b01;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+    transition: background-color 0.3s ease;
+  }
+
+  #logout:hover {
+    background-color: #b23200;
+  }
  
  ul {
      margin: 0;
