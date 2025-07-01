@@ -31,8 +31,9 @@
 	
 .logout-btn {
   position: absolute;
-  top: 16px;
-  right: 16px;
+  top: 16px;               /* distance from top of header */
+  right: 16px;             /* distance from right edge */
+  z-index: 2;              /* above all header content */
   padding: 8px 14px;
   background-color: #d83b01;
   color: #fff;
@@ -57,13 +58,15 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  z-index: 1;              /* behind the button */
 }
 
  
 .ms-welcome__header {
-  position: relative;
+  position: relative;      /* make this the positioning context */
   text-align: center;
-  padding: 20px;
+  padding: 40px 16px 20px; /* give extra top padding so button fits */
+  overflow: visible;       /* ensure absolute children aren’t clipped */
 }
 
  .ms-welcome__main {
