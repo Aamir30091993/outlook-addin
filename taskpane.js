@@ -4,6 +4,42 @@ let authDialog;
 let retrievedTokenID;
 let userEmail;
 
+// Storage helper keys and functions
+const STORAGE_KEY = "MyAddin:SessionData";
+
+  function loadSessionData() {
+   const jsonSK = localStorage.getItem(STORAGE_KEY);
+   return jsonSK ? JSON.parse(jsonSK) : null;
+}
+
+  function saveSessionData(data) {
+   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+function storeInstanceForConversation(tokenID, conversationID, instanceID) {
+  let session = loadSessionData();
+  if (!session || session.tokenID !== tokenID) {
+    session = {
+      tokenID: tokenID,
+      issued: new Date().toISOString(),
+      conversations: {}
+    };
+  }
+  session.conversations[conversationID] = {
+    instanceID: instanceID,
+    created: new Date().toISOString()
+  };
+  saveSessionData(session);
+}
+
+function getStoredInstanceID(conversationID) {
+  const session = loadSessionData();
+  if (session && session.conversations[conversationID]) {
+    return session.conversations[conversationID].instanceID;
+  }
+  return null;
+}
+
 Office.onReady((info) => {
   if (info.host === Office.HostType.Outlook) {
 	  
@@ -99,22 +135,67 @@ async function extractItemInfo() {
       : "<no date>";
   }
   
-  console.log(mode);
-  console.log(from);
-  console.log(to);
-  console.log(subject);
-  console.log(date);
+  console.log("Mode:", mode);
+  console.log("From:", from);
+  console.log("To:", to);
+  console.log("Subject:", subject);
+  console.log("Date:", date);
   
-
-  // Render into your pane
-  // document.getElementById("item-info").innerHTML = `
-    // <p><b>Mode:</b> ${mode}</p>
-    // <p><b>From:</b> ${from}</p>
-    // <p><b>To:</b> ${to}</p>
-    // <p><b>Subject:</b> ${subject}</p>
-    // <p><b>Date:</b> ${date}</p>
-  // `;
+  
+  //InstanceIDmapping part  - API call and storing the instance ID
+  //Grab the conversationId
+  const convId = item.conversationId;
+  console.log("Conversation ID:", convId);
+  
+  // Retrieve or generate instanceID
+  let instanceID = getStoredInstanceID(convId);
+  if (instanceID) {
+    console.log("Reusing existing instanceID:", instanceID);
+  }
+  else {
+    //const payload = { mode, from, to, subject, date, conversationId: convId };
+	
+	const payload = new URLSearchParams();
+    payload.append("instanceID", instanceID);
+    payload.append("tokenID", localStorage.getItem("TokenID"));
+	payload.append("clientEmailAddress", from);
+	payload.append("emailSubject", localStorage.getItem("subject"));
+	payload.append("emailDate", localStorage.getItem("date"));
+	
+    instanceID = await callYourApi(payload);
+	
+	console.log("ExtractedInstanceID from API:", instanceID)
+    if (instanceID) {
+      storeInstanceForConversation(
+        localStorage.getItem("TokenID"),
+        token,
+        convId,
+        instanceID
+      );
+      console.log("Stored new instanceID for conversation", convId);
+    }
+  }
+  //InstanceIDmapping part  - API call and storing the instance ID
 }
+
+
+async function callYourApi(data) {
+  try {
+    const response = await fetch("https://your.api/endpoint", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    });
+    if (!response.ok) throw new Error(response.statusText);
+    const json = await response.json();
+    return json.uniqueId;
+  } catch (e) {
+    console.error("API error:", e);
+    return null;
+  }
+}
+
+
 
 
 
