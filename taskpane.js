@@ -185,14 +185,18 @@ async function extractItemInfo() {
 
 async function callYourApi(data) {
   try {
+	  console.log("Inside callYourApi")
+	  console.log("Data:", data);
     const response = await fetch("https://uat-uae-ezconnect.colliersasia.com/Instance/insertUpdateInstance?", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data)
     });
     if (!response.ok) throw new Error(response.statusText);
-    const json = await response.json();
-    return json.uniqueId;
+    const jsonInstanceID = await response.json();
+	console.log("jsonInstanceID");
+	console.log(jsonInstanceID);
+    return jsonInstanceID.uniqueId;
   } catch (e) {
     console.error("API error:", e);
     return null;
