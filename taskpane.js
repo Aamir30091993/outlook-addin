@@ -20,6 +20,16 @@ Office.onReady((info) => {
 	  document.getElementById("webFrame").src = "";
 	};
 	//Logout
+	
+	   // Every time the user opens a message (or switches messages),
+    // this event fires and we can extract the fields.
+    Office.context.mailbox.addHandlerAsync(
+      Office.EventType.ItemChanged,
+      () => extractItemInfo()
+    );
+
+    // Also run once on initial load
+    extractItemInfo();
 	  
     userEmail = Office.context.mailbox.userProfile.emailAddress;
     console.log("userEmail:", userEmail);
@@ -46,6 +56,65 @@ Office.onReady((info) => {
     };
   }
 });
+
+async function extractItemInfo() {
+  const item = Office.context.mailbox.item;
+  let mode, from, to, subject, date;
+
+  // Compose mode has async getters
+  const isCompose = !!item.subject.getAsync;
+
+  if (isCompose) {
+    mode = "Compose";
+    from = Office.context.mailbox.userProfile.emailAddress;
+
+    to = await new Promise(resolve =>
+      item.to.getAsync(r =>
+        resolve(
+          r.status === Office.AsyncResultStatus.Succeeded
+            ? r.value.map(x => x.emailAddress).join("; ")
+            : "<unable to read Recipients>"
+        )
+      )
+    );
+
+    subject = await new Promise(resolve =>
+      item.subject.getAsync(r =>
+        resolve(
+          r.status === Office.AsyncResultStatus.Succeeded
+            ? r.value
+            : "<unable to read Subject>"
+        )
+      )
+    );
+
+    date = new Date().toLocaleString();
+  } else {
+    mode = "Read";
+    from = item.from?.emailAddress || "<no from>";
+    to = (item.to || []).map(x => x.emailAddress).join("; ");
+    subject = item.subject || "";
+    date = item.dateTimeCreated
+      ? item.dateTimeCreated.toLocaleString()
+      : "<no date>";
+  }
+  
+  console.log(mode);
+  console.log(from);
+  console.log(to);
+  console.log(subject);
+  console.log(date);
+  
+
+  // Render into your pane
+  // document.getElementById("item-info").innerHTML = `
+    // <p><b>Mode:</b> ${mode}</p>
+    // <p><b>From:</b> ${from}</p>
+    // <p><b>To:</b> ${to}</p>
+    // <p><b>Subject:</b> ${subject}</p>
+    // <p><b>Date:</b> ${date}</p>
+  // `;
+}
 
 
 
