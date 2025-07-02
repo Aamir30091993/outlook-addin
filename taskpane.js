@@ -81,6 +81,30 @@ Office.onReady((info) => {
   }
 });
 
+function loginWithDialog() {
+  return new Promise((resolve, reject) => {
+    Office.context.ui.displayDialogAsync(
+      "https://aamir30091993.github.io/outlook-addin/auth.html",
+      { height: 60, width: 30 },
+      function (asyncResult) {
+        if (asyncResult.status === Office.AsyncResultStatus.Failed) {
+          reject(asyncResult.error.message);
+        } else {
+          authDialog = asyncResult.value;
+          authDialog.addEventHandler(Office.EventType.DialogMessageReceived, (arg) => {
+            console.log("Token received:", arg.message);
+            authDialog.close();
+            resolve(arg.message);
+          });
+          authDialog.addEventHandler(Office.EventType.DialogEventReceived, (arg) => {
+            console.warn("Dialog event received:", arg.error);
+          });
+        }
+      }
+    );
+  });
+}
+
 async function handleProceed() {
   // Hide welcome UI and show logout
   document.querySelector("header").style.display = "none";
@@ -107,8 +131,9 @@ async function handleProceed() {
 	}
     const tokenID = localStorage.getItem("TokenID");
     //const payload = { mode, from, to, subject, date, conversationId: convId, tokenID };
-	const payload = {instanceID, tokenID, from, subject, date};
+	//const payload = {instanceID, tokenID, from, subject, date};
 	
+	const payload = new URLSearchParams();   	
 	//const postData = new URLSearchParams();
     payload.append("instanceID", instanceID);
     payload.append("tokenID", tokenID);
