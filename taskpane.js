@@ -64,9 +64,18 @@ Office.onReady((info) => {
     // Handle proceed click
     document.getElementById("run").onclick = async () => {
       try {
+        const tokenID = localStorage.getItem("TokenID");
+        if (!tokenID) {
+          // Prompt Azure login and get token
+          const token = await loginWithDialog();
+          console.log("Token received:", token);
+          // Store token in localStorage via callWebService
+          await callWebService("aamir.s"); //userEmail
+        }
+        // Now tokenID exists
         await handleProceed();
       } catch (e) {
-        console.error("Error on proceed:", e);
+        console.error("Error during authentication or proceed:", e);
       }
     };
   }
@@ -99,6 +108,15 @@ async function handleProceed() {
     const tokenID = localStorage.getItem("TokenID");
     //const payload = { mode, from, to, subject, date, conversationId: convId, tokenID };
 	const payload = {instanceID, tokenID, from, subject, date};
+	
+	//const postData = new URLSearchParams();
+    payload.append("instanceID", instanceID);
+    payload.append("tokenID", tokenID);
+	payload.append("clientEmailAddress", from);
+    payload.append("emailSubject", subject);
+	payload.append("emailDate", date);
+   
+	
     instanceID = await callYourApi(payload);
 	console.log("After api call:", instanceID);
     if (instanceID) {
@@ -169,5 +187,74 @@ async function callYourApi(data) {
   } catch (e) {
     console.error("API error:", e);
     return null;
+  }
+}
+
+async function callWebService(username) {
+  try {
+    console.log("Entered callWebService");
+
+    const postData = new URLSearchParams();
+    postData.append("UserName", username);
+    postData.append("Password", "123");
+
+    const url = "https://uat-uae-ezconnect.colliersasia.com/api/Token?";
+
+    const json = await webPostMethod(postData, url);
+    console.log(json);
+
+    if (!json || json.trim() === "") {
+      console.warn("Empty or invalid response from API.");
+      return null;
+    }
+
+    let result;
+    try {
+      result = JSON.parse(json);
+    } catch (e) {
+      console.error("Invalid JSON format:", json);
+      return null;
+    }
+
+    if (result) {
+      localStorage.setItem("Token", result.token);
+      localStorage.setItem("TokenID", result.tokenid);
+      localStorage.setItem("UserID", result.userID);
+      localStorage.setItem("CountryID", result.countryID);
+      localStorage.setItem("Lang", result.lang);
+      localStorage.setItem("OrgSlID", result.orgSlID);
+      localStorage.setItem("Status", result.status);
+      localStorage.setItem("UserName", result.userName);
+    }
+
+    return "";
+  } catch (err) {
+    console.error("Error in callWebService:", err);
+    return null;
+  }
+}
+
+async function webPostMethod(postData, url) {
+  console.log("Entered webPostMethod()");
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: postData,
+    });
+
+    if (!response.ok) {
+      console.error("Response status not OK:", response.status);
+      return "";
+    }
+
+    const responseText = await response.text();
+    console.log("Response from server:", responseText);
+    return responseText;
+  } catch (error) {
+    console.error("Exception in webPostMethod():", error.message);
+    return "";
   }
 }
