@@ -91,10 +91,16 @@ async function handleProceed() {
   if (instanceID) {
     console.log("Reusing existing instanceID:", instanceID);
   } else {
+	console.log("Existing instanceID:", instanceID);
+	if (instanceID == null)
+	{
+		instanceID = "0";
+	}
     const tokenID = localStorage.getItem("TokenID");
     //const payload = { mode, from, to, subject, date, conversationId: convId, tokenID };
 	const payload = {instanceID, tokenID, from, subject, date};
     instanceID = await callYourApi(payload);
+	console.log("After api call:", instanceID);
     if (instanceID) {
       storeInstanceForConversation(tokenID, convId, instanceID);
       console.log("Stored new instanceID for conversation", convId);
