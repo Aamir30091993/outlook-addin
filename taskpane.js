@@ -10,10 +10,14 @@ const STORAGE_KEY = "MyAddin:SessionData";
   function loadSessionData() {
    const jsonSK = localStorage.getItem(STORAGE_KEY);
    return jsonSK ? JSON.parse(jsonSK) : null;
+   
+   console.log("jsonSK:", jsonSK);
 }
 
   function saveSessionData(data) {
    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+   
+   console.log("SaveSessionData:", data);
 }
 
 function storeInstanceForConversation(tokenID, conversationID, instanceID) {
@@ -181,7 +185,7 @@ async function extractItemInfo() {
 
 async function callYourApi(data) {
   try {
-    const response = await fetch("https://your.api/endpoint", {
+    const response = await fetch("https://uat-uae-ezconnect.colliersasia.com/Instance/insertUpdateInstance?", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data)
