@@ -201,14 +201,16 @@ async function callYourApi(data) {
       "https://uat-uae-ezconnect.colliersasia.com/Instance/insertUpdateInstance",
       {
         method: "POST",
-        "Content-Type": "application/x-www-form-urlencoded",
-        body: data
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: data.toString()  // URLSearchParams or similar
       }
     );
     if (!response.ok) throw new Error(response.statusText);
     const json = await response.json();
-	console.log("InstanceID :", json);
-    return json.uniqueID;
+    console.log("InstanceID response:", json);
+    return json.uniqueID;    // match the exact property name from your API
   } catch (e) {
     console.error("API error:", e);
     return null;
