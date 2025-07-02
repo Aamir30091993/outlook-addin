@@ -201,8 +201,8 @@ async function callYourApi(data) {
       "https://uat-uae-ezconnect.colliersasia.com/Instance/insertUpdateInstance",
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data)
+        "Content-Type": "application/x-www-form-urlencoded",
+        body: data
       }
     );
     if (!response.ok) throw new Error(response.statusText);
