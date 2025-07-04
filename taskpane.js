@@ -190,11 +190,31 @@ async function extractItemInfo() {
     from = item.from?.emailAddress || "";
     to = (item.to || []).map((x) => x.emailAddress).join("; ");
     subject = item.subject || "";
-    date = item.dateTimeCreated
-      ? item.dateTimeCreated.toISOString()
-      : new Date().toISOString();
+    //date = item.dateTimeCreated
+      //? item.dateTimeCreated.toISOString()
+      //: new Date().toISOString();
+	date = formatEmailDate(item.dateTimeCreated.toISOString());
+	
+	console.log(date);
   }
   return { mode, from, to, subject, date };
+}
+
+function formatEmailDate(isoString) {
+  const d = new Date(isoString);
+
+  // helper to zero-pad numbers under 10
+  const pad = (n) => n.toString().padStart(2, "0");
+
+  const day     = pad(d.getDate());
+  const month   = pad(d.getMonth() + 1);
+  const year    = d.getFullYear();
+
+  const hours   = pad(d.getHours());
+  const minutes = pad(d.getMinutes());
+  const seconds = pad(d.getSeconds());
+
+  return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
 }
 
 async function callYourApi(data) {
