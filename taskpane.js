@@ -140,6 +140,9 @@ async function handleProceed() {
 	payload.append("clientEmailAddress", from);
     payload.append("emailSubject", subject);
 	payload.append("emailDate", date);
+	payload.append("from", from);
+	payload.append("to", to);
+	payload.append("conversationid", convId);
    
 	
     instanceID = await callYourApi(payload);
