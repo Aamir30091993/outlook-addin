@@ -6,42 +6,55 @@ let userEmail;
 
 // Storage helper keys and functions
 const STORAGE_KEY = "MyAddin:SessionData";
+const EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours in ms
 
 function loadSessionData() {
-  const jsonSK = localStorage.getItem(STORAGE_KEY);
-  console.log("jsonSK");
-  console.log(jsonSK);
-  return jsonSK ? JSON.parse(jsonSK) : null;
+  const json = localStorage.getItem(STORAGE_KEY);
+  if (!json) return { instances: {}, issued: null, tokenID: null };
+  try {
+    const session = JSON.parse(json);
+    if (session.issued) {
+      const issuedTime = new Date(session.issued).getTime();
+      if (Date.now() - issuedTime > EXPIRY_MS) {
+        // expired, clear storage
+        localStorage.removeItem(STORAGE_KEY);
+        return { instances: {}, issued: null, tokenID: null };
+      }
+    }
+    return session;
+  } catch {
+    localStorage.removeItem(STORAGE_KEY);
+    return { instances: {}, issued: null, tokenID: null };
+  }
 }
 
 function saveSessionData(data) {
+  if (!data.issued) data.issued = new Date().toISOString();
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  console.log("saveSessionData");
-  console.log(data);
 }
 
-function storeInstanceForConversation(tokenID, conversationID, instanceID) {
-  let session = loadSessionData();
-  if (!session || session.tokenID !== tokenID) {
-    session = {
-      tokenID: tokenID,
-      issued: new Date().toISOString(),
-      conversations: {}
-    };
-  }
-  session.conversations[conversationID] = {
-    instanceID: instanceID,
-    created: new Date().toISOString()
-  };
+function makeInstanceKey(tokenID, conversationID, from, toList) {
+  // Normalize 'to' list by splitting and sorting
+  const recipients = toList.split(';').map(r => r.trim().toLowerCase()).filter(r => r);
+  recipients.sort();
+  const normalizedTo = recipients.join(';');
+  return [tokenID, conversationID, from.trim().toLowerCase(), normalizedTo].join("|");
+}
+
+function storeInstanceForConversation(tokenID, conversationID, from, to, instanceID) {
+  const session = loadSessionData();
+  session.tokenID = tokenID;
+  const key = makeInstanceKey(tokenID, conversationID, from, to);
+  session.instances = session.instances || {};
+  session.instances[key] = { instanceID, created: new Date().toISOString() };
   saveSessionData(session);
 }
 
-function getStoredInstanceID(conversationID) {
+function getStoredInstanceID(tokenID, conversationID, from, to) {
   const session = loadSessionData();
-  if (session && session.conversations[conversationID]) {
-    return session.conversations[conversationID].instanceID;
-  }
-  return null;
+  if (!session.instances) return null;
+  const key = makeInstanceKey(tokenID, conversationID, from, to);
+  return session.instances[key]?.instanceID || null;
 }
 
 Office.onReady((info) => {
@@ -119,8 +132,10 @@ async function handleProceed() {
   // Extract item fields
   const { mode, from, to, subject, date } = await extractItemInfo();
 
+  const tokenID = localStorage.getItem("TokenID");
+
   // Determine or create instanceID
-  let instanceID = getStoredInstanceID(convId);
+  let instanceID = getStoredInstanceID(tokenID, convId, from, to);
   if (instanceID) {
     console.log("Reusing existing instanceID:", instanceID);
   } else {
@@ -129,7 +144,7 @@ async function handleProceed() {
 	{
 		instanceID = "0";
 	}
-    const tokenID = localStorage.getItem("TokenID");
+  
     //const payload = { mode, from, to, subject, date, conversationId: convId, tokenID };
 	//const payload = {instanceID, tokenID, from, subject, date};
 	
@@ -148,7 +163,7 @@ async function handleProceed() {
     instanceID = await callYourApi(payload);
 	console.log("After api call:", instanceID);
     if (instanceID) {
-      storeInstanceForConversation(tokenID, convId, instanceID);
+      storeInstanceForConversation(tokenID, convId, from, to, instanceID);
       console.log("Stored new instanceID for conversation", convId);
     }
   }
