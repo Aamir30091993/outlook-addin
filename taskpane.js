@@ -83,7 +83,7 @@ Office.onReady((info) => {
           const token = await loginWithDialog();
           console.log("Token received:", token);
           // Store token in localStorage via callWebService
-          await callWebService("aamir.s"); //userEmail
+          await callWebService(userEmail); //userEmail //aamir.s
         }
         // Now tokenID exists
         await handleProceed();
