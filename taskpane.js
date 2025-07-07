@@ -130,7 +130,10 @@ async function handleProceed() {
   document.getElementById("app-body").style.display = "flex";
 
   const item = Office.context.mailbox.item;
-  const convId = item.conversationId;
+  
+  //const convId = item.conversationId;
+  
+  const convId = await getConversationId(item);
 
   // Extract item fields
   const { mode, from, to, subject, date } = await extractItemInfo();
@@ -182,6 +185,53 @@ async function handleProceed() {
     )}&instanceID=${encodeURIComponent(instanceID)}`;
 }
 
+/**
+ * Gets conversationId for read and compose items
+ */
+function getConversationId(item) {
+  return new Promise((resolve) => {
+    if (item.conversationId) {
+      resolve(item.conversationId);
+    } else {
+      // Compose: save draft to generate conversationId
+      item.saveAsync((saveResult) => {
+        if (saveResult.status === Office.AsyncResultStatus.Succeeded) {
+          const itemId = saveResult.value;
+          const soap = `
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+               xmlns:t="http://schemas.microsoft.com/exchange/services/2006/types">
+  <soap:Body>
+    <GetItem xmlns="http://schemas.microsoft.com/exchange/services/2006/messages">
+      <ItemShape>
+        <t:BaseShape>IdOnly</t:BaseShape>
+        <t:AdditionalProperties>
+          <t:FieldURI FieldURI="item:ConversationId" />
+        </t:AdditionalProperties>
+      </ItemShape>
+      <ItemIds>
+        <t:ItemId Id="${itemId}" />
+      </ItemIds>
+    </GetItem>
+  </soap:Body>
+</soap:Envelope>`;
+          Office.context.mailbox.makeEwsRequestAsync(soap, (ewsResult) => {
+            let cid = null;
+            if (ewsResult.status === Office.AsyncResultStatus.Succeeded) {
+              const parser = new DOMParser();
+              const xml = parser.parseFromString(ewsResult.value, 'text/xml');
+              const node = xml.getElementsByTagName('t:ConversationId')[0];
+              cid = node ? node.getAttribute('Id') : null;
+            }
+            resolve(cid);
+          });
+        } else {
+          resolve(null);
+        }
+      });
+    }
+  });
+}
+
 async function extractItemInfo() {
   const item = Office.context.mailbox.item;
   const isCompose = !!item.subject.getAsync;
@@ -202,7 +252,8 @@ async function extractItemInfo() {
     subject = await new Promise((r) =>
       item.subject.getAsync((res) => r(res.status === Office.AsyncResultStatus.Succeeded ? res.value : ""))
     );
-    date = new Date().toISOString();
+    //date = new Date().toISOString();
+	date = formatEmailDate(new Date().toISOString());
   } else {
     mode = "Read";
     from = item.from?.emailAddress || "";
