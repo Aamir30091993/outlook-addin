@@ -60,6 +60,9 @@ function getStoredInstanceID(tokenID, conversationID, from, to) {
 Office.onReady((info) => {
   if (info.host === Office.HostType.Outlook) {
     userEmail = Office.context.mailbox.userProfile.emailAddress;
+	if (userEmail && userEmail.includes("@")) {
+        userEmail = userEmail.split("@")[0];
+       }
     document.getElementById("sideload-msg").style.display = "none";
     document.getElementById("app-body").style.display = "flex";
 
