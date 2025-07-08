@@ -191,42 +191,51 @@ async function handleProceed() {
 function getConversationId(item) {
   return new Promise((resolve) => {
     if (item.conversationId) {
+      // Read mode
       resolve(item.conversationId);
     } else {
-      // Compose: save draft to generate conversationId
-      item.saveAsync((saveResult) => {
-        if (saveResult.status === Office.AsyncResultStatus.Succeeded) {
-          const itemId = saveResult.value;
-          const soap = `
+      // Compose mode
+      item.saveAsync((saveRes) => {
+        if (saveRes.status !== Office.AsyncResultStatus.Succeeded) {
+          console.error("Draft save failed:", saveRes.error);
+          return resolve(null);
+        }
+        const itemId = saveRes.value;
+        console.log("Draft saved, ItemId:", itemId);
+
+        const soap = `
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
-               xmlns:t="http://schemas.microsoft.com/exchange/services/2006/types">
+               xmlns:t="http://schemas.microsoft.com/exchange/services/2006/types"
+               xmlns:m="http://schemas.microsoft.com/exchange/services/2006/messages">
   <soap:Body>
-    <GetItem xmlns="http://schemas.microsoft.com/exchange/services/2006/messages">
-      <ItemShape>
+    <m:GetItem>
+      <m:ItemShape>
         <t:BaseShape>IdOnly</t:BaseShape>
         <t:AdditionalProperties>
-          <t:FieldURI FieldURI="item:ConversationId" />
+          <t:FieldURI FieldURI="item:ConversationId"/>
         </t:AdditionalProperties>
-      </ItemShape>
-      <ItemIds>
+      </m:ItemShape>
+      <m:ItemIds>
         <t:ItemId Id="${itemId}" />
-      </ItemIds>
-    </GetItem>
+      </m:ItemIds>
+    </m:GetItem>
   </soap:Body>
 </soap:Envelope>`;
-          Office.context.mailbox.makeEwsRequestAsync(soap, (ewsResult) => {
-            let cid = null;
-            if (ewsResult.status === Office.AsyncResultStatus.Succeeded) {
-              const parser = new DOMParser();
-              const xml = parser.parseFromString(ewsResult.value, 'text/xml');
-              const node = xml.getElementsByTagName('t:ConversationId')[0];
-              cid = node ? node.getAttribute('Id') : null;
-            }
+
+        Office.context.mailbox.makeEwsRequestAsync(soap, (ewsRes) => {
+          if (ewsRes.status === Office.AsyncResultStatus.Succeeded) {
+            console.log("EWS raw response:", ewsRes.value);
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(ewsRes.value, "text/xml");
+            const node = xmlDoc.getElementsByTagName("t:ConversationId")[0];
+            const cid = node ? node.getAttribute("Id") : null;
+            console.log("Parsed ConversationId:", cid);
             resolve(cid);
-          });
-        } else {
-          resolve(null);
-        }
+          } else {
+            console.error("EWS error:", ewsRes.error);
+            resolve(null);
+          }
+        });
       });
     }
   });
