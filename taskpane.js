@@ -185,66 +185,53 @@ async function handleProceed() {
     )}&instanceID=${encodeURIComponent(instanceID)}`;
 }
 
-/**
- * Gets the conversationId for both read and compose items.
- * Falls back to REST if EWS fails.
- */
-function getConversationId(item) {
-  return new Promise((resolve) => {
-    // 1) Already have it in read mode
-    if (item.conversationId) {
-      return resolve(item.conversationId);
+async function getConversationId(item) {
+  // 1) Read mode: immediate
+  if (item.conversationId) {
+    return item.conversationId;
+  }
+
+  // 2) Compose mode: save draft
+  const saveResult = await new Promise((resolve) =>
+    item.saveAsync(resolve)
+  );
+  if (saveResult.status !== Office.AsyncResultStatus.Succeeded) {
+    console.error("Draft save failed:", saveResult.error);
+    return null;
+  }
+  const itemId = saveResult.value;
+  console.log("Draft saved, ItemId:", itemId);
+
+  // 3) Acquire Graph token (Mail.ReadWrite)
+  let graphToken;
+  const silentRequest = { scopes: ["Mail.ReadWrite"] };
+  try {
+    const resp = await msalInstance.acquireTokenSilent(silentRequest);
+    graphToken = resp.accessToken;
+  } catch (silentError) {
+    console.warn("Silent token failed, falling back to popup:", silentError);
+    const popupReq = { ...silentRequest, prompt: "select_account" };
+    const resp = await msalInstance.acquireTokenPopup(popupReq);
+    graphToken = resp.accessToken;
+  }
+
+  // 4) Call Graph to fetch the draft’s conversationId
+  const graphUrl = `https://graph.microsoft.com/v1.0/me/messages/${encodeURIComponent(itemId)}?$select=conversationId`;
+  const graphResp = await fetch(graphUrl, {
+    headers: {
+      Authorization: `Bearer ${graphToken}`,
+      Accept: "application/json"
     }
-
-    // 2) Compose mode: save draft
-    item.saveAsync(async (saveRes) => {
-      if (saveRes.status !== Office.AsyncResultStatus.Succeeded) {
-        console.error("Draft save failed:", saveRes.error);
-        return resolve(null);
-      }
-      const itemId = saveRes.value;
-      console.log("Draft saved, ItemId:", itemId);
-
-      try {
-        // 3) Get a REST callback token
-        const callbackToken = await new Promise((res, rej) =>
-          Office.context.mailbox.getCallbackTokenAsync(
-            { isRest: true },
-            (asyncResult) => {
-              if (asyncResult.status === Office.AsyncResultStatus.Succeeded) {
-                res(asyncResult.value);
-              } else {
-                rej(asyncResult.error);
-              }
-            }
-          )
-        );
-
-        // 4) Call the REST API for that message
-        const restUrl =  
-          `${Office.context.mailbox.restUrl}/v2.0/me/messages/${encodeURIComponent(itemId)}?$select=conversationId`;
-
-        const resp = await fetch(restUrl, {
-          headers: {
-            Authorization: `Bearer ${callbackToken}`,
-            Accept: "application/json;odata.metadata=none",
-          },
-        });
-
-        if (!resp.ok) {
-          console.error("REST fetch failed:", resp.status, await resp.text());
-          return resolve(null);
-        }
-
-        const json = await resp.json();
-        console.log("REST conversationId:", json.conversationId);
-        resolve(json.conversationId);
-      } catch (err) {
-        console.error("Error fetching via REST:", err);
-        resolve(null);
-      }
-    });
   });
+
+  if (!graphResp.ok) {
+    console.error("Graph fetch failed:", graphResp.status, await graphResp.text());
+    return null;
+  }
+
+  const data = await graphResp.json();
+  console.log("Graph conversationId:", data.conversationId);
+  return data.conversationId;
 }
 
 
