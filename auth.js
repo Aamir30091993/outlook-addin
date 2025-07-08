@@ -11,26 +11,12 @@ const loginRequest = {
   scopes: ["User.Read", "Mail.ReadWrite"]
 };
 
-Office.onReady(async () => {
+// Immediately run loginPopup in this dialog
+(async () => {
   try {
-    const response = await msalInstance.loginPopup(loginRequest);
-    const token = response.accessToken;
-
-    if (
-      Office?.context?.ui?.messageParent
-    ) {
-      Office.context.ui.messageParent(token);
-    } else {
-      console.warn("messageParent is not available.");
-    }
-
+    const response = await window.msalInstance.loginPopup(loginRequest);
+    Office.context.ui.messageParent(response.accessToken);
   } catch (e) {
-    console.error("Login failed:", e);
-
-    if (
-      Office?.context?.ui?.messageParent
-    ) {
-      Office.context.ui.messageParent("ERROR:" + e.message);
-    }
+    Office.context.ui.messageParent("ERROR:" + e.message);
   }
-});
+})();
