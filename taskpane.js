@@ -186,60 +186,67 @@ async function handleProceed() {
 }
 
 /**
- * Gets conversationId for read and compose items
+ * Gets the conversationId for both read and compose items.
+ * Falls back to REST if EWS fails.
  */
 function getConversationId(item) {
   return new Promise((resolve) => {
+    // 1) Already have it in read mode
     if (item.conversationId) {
-      // Read mode
-      resolve(item.conversationId);
-    } else {
-      // Compose mode
-      item.saveAsync((saveRes) => {
-        if (saveRes.status !== Office.AsyncResultStatus.Succeeded) {
-          console.error("Draft save failed:", saveRes.error);
+      return resolve(item.conversationId);
+    }
+
+    // 2) Compose mode: save draft
+    item.saveAsync(async (saveRes) => {
+      if (saveRes.status !== Office.AsyncResultStatus.Succeeded) {
+        console.error("Draft save failed:", saveRes.error);
+        return resolve(null);
+      }
+      const itemId = saveRes.value;
+      console.log("Draft saved, ItemId:", itemId);
+
+      try {
+        // 3) Get a REST callback token
+        const callbackToken = await new Promise((res, rej) =>
+          Office.context.mailbox.getCallbackTokenAsync(
+            { isRest: true },
+            (asyncResult) => {
+              if (asyncResult.status === Office.AsyncResultStatus.Succeeded) {
+                res(asyncResult.value);
+              } else {
+                rej(asyncResult.error);
+              }
+            }
+          )
+        );
+
+        // 4) Call the REST API for that message
+        const restUrl =  
+          `${Office.context.mailbox.restUrl}/v2.0/me/messages/${encodeURIComponent(itemId)}?$select=conversationId`;
+
+        const resp = await fetch(restUrl, {
+          headers: {
+            Authorization: `Bearer ${callbackToken}`,
+            Accept: "application/json;odata.metadata=none",
+          },
+        });
+
+        if (!resp.ok) {
+          console.error("REST fetch failed:", resp.status, await resp.text());
           return resolve(null);
         }
-        const itemId = saveRes.value;
-        console.log("Draft saved, ItemId:", itemId);
 
-        const soap = `
-<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
-               xmlns:t="http://schemas.microsoft.com/exchange/services/2006/types"
-               xmlns:m="http://schemas.microsoft.com/exchange/services/2006/messages">
-  <soap:Body>
-    <m:GetItem>
-      <m:ItemShape>
-        <t:BaseShape>IdOnly</t:BaseShape>
-        <t:AdditionalProperties>
-          <t:FieldURI FieldURI="item:ConversationId"/>
-        </t:AdditionalProperties>
-      </m:ItemShape>
-      <m:ItemIds>
-        <t:ItemId Id="${itemId}" />
-      </m:ItemIds>
-    </m:GetItem>
-  </soap:Body>
-</soap:Envelope>`;
-
-        Office.context.mailbox.makeEwsRequestAsync(soap, (ewsRes) => {
-          if (ewsRes.status === Office.AsyncResultStatus.Succeeded) {
-            console.log("EWS raw response:", ewsRes.value);
-            const parser = new DOMParser();
-            const xmlDoc = parser.parseFromString(ewsRes.value, "text/xml");
-            const node = xmlDoc.getElementsByTagName("t:ConversationId")[0];
-            const cid = node ? node.getAttribute("Id") : null;
-            console.log("Parsed ConversationId:", cid);
-            resolve(cid);
-          } else {
-            console.error("EWS error:", ewsRes.error);
-            resolve(null);
-          }
-        });
-      });
-    }
+        const json = await resp.json();
+        console.log("REST conversationId:", json.conversationId);
+        resolve(json.conversationId);
+      } catch (err) {
+        console.error("Error fetching via REST:", err);
+        resolve(null);
+      }
+    });
   });
 }
+
 
 async function extractItemInfo() {
   const item = Office.context.mailbox.item;
