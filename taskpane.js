@@ -185,32 +185,52 @@ async function handleProceed() {
     )}&instanceID=${encodeURIComponent(instanceID)}`;
 }
 
+/**
+ * Returns the conversationId for an item, in both read and compose modes,
+ * using Microsoft Graph and MSAL.
+ */
 async function getConversationId(item) {
+  // 1) Read mode already has it
   if (item.conversationId) {
     return item.conversationId;
   }
-  const saveResult = await new Promise(r => item.saveAsync(r));
-  if (saveResult.status !== Office.AsyncResultStatus.Succeeded) return null;
-  const itemId = saveResult.value;
 
-  // Acquire Graph token with our msalInstance
+  // 2) Compose mode: save the draft (gets you an itemId)
+  const saveRes = await new Promise((res) => item.saveAsync(res));
+  if (saveRes.status !== Office.AsyncResultStatus.Succeeded) {
+    console.error("Draft save failed:", saveRes.error);
+    return null;
+  }
+  const itemId = saveRes.value;
+  console.log("Draft saved, ItemId:", itemId);
+
+  // 3) Acquire Graph token via MSAL
   let graphToken;
+  const tokenRequest = { scopes: ["Mail.ReadWrite"] };
   try {
-    const resp = await msalInstance.acquireTokenSilent({ scopes: ["Mail.ReadWrite"] });
-    graphToken = resp.accessToken;
-  } catch {
-    const resp2 = await msalInstance.acquireTokenPopup({ scopes: ["Mail.ReadWrite"] });
-    graphToken = resp2.accessToken;
+    const silent = await window.msalInstance.acquireTokenSilent(tokenRequest);
+    graphToken = silent.accessToken;
+  } catch (silentErr) {
+    console.warn("Silent token failed, using popup:", silentErr);
+    const popup = await window.msalInstance.acquireTokenPopup(tokenRequest);
+    graphToken = popup.accessToken;
   }
 
-  // Fetch via Graph
-  const graphUrl = `${Office.context.mailbox.restUrl}/v2.0/me/messages/${encodeURIComponent(itemId)}?$select=conversationId`;
-  const graphResp = await fetch(graphUrl, {
-    headers: { Authorization: `Bearer ${graphToken}` }
+  // 4) Fetch via Graph
+  const graphUrl = `https://graph.microsoft.com/v1.0/me/messages/${encodeURIComponent(itemId)}?$select=conversationId`;
+  const resp = await fetch(graphUrl, {
+    headers: {
+      Authorization: `Bearer ${graphToken}`,
+      Accept: "application/json"
+    }
   });
-  if (!graphResp.ok) return null;
-  const json = await graphResp.json();
-  return json.conversationId;
+  if (!resp.ok) {
+    console.error("Graph call failed:", resp.status, await resp.text());
+    return null;
+  }
+  const data = await resp.json();
+  console.log("Graph conversationId:", data.conversationId);
+  return data.conversationId;
 }
 
 
