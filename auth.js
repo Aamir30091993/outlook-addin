@@ -11,10 +11,13 @@ const loginRequest = {
   scopes: ["User.Read", "Mail.Read"]
 };
 
-// Immediately run loginPopup in this dialog
+// Immediately run loginPopup in this dialog	
 (async () => {
   try {
     const response = await window.msalInstance.loginPopup(loginRequest);
+	
+	msalInstance.setActiveAccount(response.account);
+	
     Office.context.ui.messageParent(response.accessToken);
   } catch (e) {
     Office.context.ui.messageParent("ERROR:" + e.message);
