@@ -107,18 +107,81 @@ function loginWithDialog() {
           reject(asyncResult.error.message);
         } else {
           authDialog = asyncResult.value;
+
           authDialog.addEventHandler(Office.EventType.DialogMessageReceived, (arg) => {
-            console.log("Token received:", arg.message);
+            console.log("Dialog response:", arg.message);
             authDialog.close();
-            resolve(arg.message);
+
+            if (arg.message.startsWith("ERROR:")) {
+              reject(arg.message);
+            } else {
+              try {
+                const result = JSON.parse(arg.message);
+                
+                // Save accessToken & account
+                localStorage.setItem("accessToken", result.accessToken);
+                localStorage.setItem("msalAccount", JSON.stringify(result.account));
+
+                // Rehydrate the MSAL instance (if available globally)
+                if (window.msalInstance) {
+                  window.msalInstance.setActiveAccount(result.account);
+                }
+
+                resolve(result.accessToken);
+              } catch (e) {
+                reject("Failed to parse auth dialog response.");
+              }
+            }
           });
+
           authDialog.addEventHandler(Office.EventType.DialogEventReceived, (arg) => {
-            console.warn("Dialog event received:", arg.error);
+            console.warn("Dialog closed or failed:", arg.error);
+            reject("Dialog closed or failed.");
           });
         }
       }
     );
   });
+}
+
+async function getAccessToken() {
+  try {
+    const msalAccountJson = localStorage.getItem("msalAccount");
+    const msalAccount = msalAccountJson ? JSON.parse(msalAccountJson) : null;
+
+    if (!msalAccount) {
+      throw new Error("No account found");
+    }
+
+    if (!window.msalInstance) {
+      throw new Error("MSAL instance is not initialized");
+    }
+
+    // Set the active account if not already
+    window.msalInstance.setActiveAccount(msalAccount);
+
+    const silentRequest = {
+      scopes: ["User.Read", "Mail.Read"],
+      account: msalAccount
+    };
+
+    const response = await window.msalInstance.acquireTokenSilent(silentRequest);
+    console.log("Silent token acquired.");
+    localStorage.setItem("accessToken", response.accessToken);
+    return response.accessToken;
+
+  } catch (error) {
+    console.warn("Silent token failed, using popup:", error.message);
+
+    // Only open dialog if no tokenID already exists
+    const tokenID = localStorage.getItem("TokenID");
+    if (!tokenID) {
+      return await loginWithDialog();
+    } else {
+      console.warn("TokenID already exists, skipping auth popup.");
+      return localStorage.getItem("accessToken");
+    }
+  }
 }
 
 async function handleProceed() {
@@ -192,11 +255,12 @@ async function handleProceed() {
 async function getConversationId(item) {
   // 1) Read mode already has it
   if (item.conversationId) {
+    console.log("Using item.conversationId:", item.conversationId);
     return item.conversationId;
   }
 
-  // 2) Compose mode: save the draft (gets you an itemId)
-  const saveRes = await new Promise((res) => item.saveAsync(res));
+  // 2) Compose mode: save the draft to get itemId
+  const saveRes = await new Promise((resolve) => item.saveAsync(resolve));
   if (saveRes.status !== Office.AsyncResultStatus.Succeeded) {
     console.error("Draft save failed:", saveRes.error);
     return null;
@@ -204,49 +268,40 @@ async function getConversationId(item) {
   const itemId = saveRes.value;
   console.log("Draft saved, ItemId:", itemId);
 
-  // 3) Acquire Graph token via MSAL
+  // 3) Get Graph token using getAccessToken()
   let graphToken;
-  
-  const msalInstance = window.msalInstance;
-  const accounts = msalInstance.getAllAccounts();
-
-  if (!accounts || accounts.length === 0) {
-    throw new Error("No account found");
-  }
-
-  // Ensure active account is set
-  if (!msalInstance.getActiveAccount()) {
-    msalInstance.setActiveAccount(accounts[0]);
-  }
-  
-  const tokenRequest = { 
-  scopes: ["User.Read", "Mail.Read"],
-  account: accounts[0]
-  };
   try {
-    const silent = await window.msalInstance.acquireTokenSilent(tokenRequest);
-    graphToken = silent.accessToken;
-  } catch (silentErr) {
-    console.warn("Silent token failed, using popup:", silentErr);
-    const popup = await window.msalInstance.acquireTokenPopup(tokenRequest);
-    graphToken = popup.accessToken;
-  }
-
-  // 4) Fetch via Graph
-  const graphUrl = `https://graph.microsoft.com/v1.0/me/messages/${encodeURIComponent(itemId)}?$select=conversationId`;
-  const resp = await fetch(graphUrl, {
-    headers: {
-      Authorization: `Bearer ${graphToken}`,
-      Accept: "application/json"
-    }
-  });
-  if (!resp.ok) {
-    console.error("Graph call failed:", resp.status, await resp.text());
+    graphToken = await getAccessToken(); // ← uses MSAL with fallback
+  } catch (err) {
+    console.error("Failed to get Graph token:", err);
     return null;
   }
-  const data = await resp.json();
-  console.log("Graph conversationId:", data.conversationId);
-  return data.conversationId;
+
+  // 4) Call Microsoft Graph to get conversationId
+  const graphUrl = `https://graph.microsoft.com/v1.0/me/messages/${encodeURIComponent(itemId)}?$select=conversationId`;
+
+  try {
+    const response = await fetch(graphUrl, {
+      headers: {
+        Authorization: `Bearer ${graphToken}`,
+        Accept: "application/json"
+      }
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Graph API failed:", response.status, errorText);
+      return null;
+    }
+
+    const data = await response.json();
+    console.log("Fetched conversationId from Graph:", data.conversationId);
+    return data.conversationId;
+
+  } catch (fetchError) {
+    console.error("Error calling Graph API:", fetchError);
+    return null;
+  }
 }
 
 

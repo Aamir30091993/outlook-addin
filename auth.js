@@ -17,8 +17,14 @@ const loginRequest = {
     const response = await window.msalInstance.loginPopup(loginRequest);
 	
 	msalInstance.setActiveAccount(response.account);
+	localStorage.setItem("msalAccount", JSON.stringify(response.account));
 	
-    Office.context.ui.messageParent(response.accessToken);
+	const result = {
+      accessToken: response.accessToken,
+      account: response.account
+    };
+	
+    Office.context.ui.messageParent(JSON.stringify(result));
   } catch (e) {
     Office.context.ui.messageParent("ERROR:" + e.message);
   }
