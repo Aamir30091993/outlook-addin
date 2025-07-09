@@ -8,7 +8,7 @@ const msalConfig = {
 
 window.msalInstance = new msal.PublicClientApplication(msalConfig);
 const loginRequest = {
-  scopes: ["User.Read", "Mail.ReadWrite"]
+  scopes: ["User.Read", "Mail.Read"]
 };
 
 // Immediately run loginPopup in this dialog

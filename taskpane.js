@@ -206,7 +206,7 @@ async function getConversationId(item) {
 
   // 3) Acquire Graph token via MSAL
   let graphToken;
-  const tokenRequest = { scopes: ["Mail.ReadWrite"] };
+  const tokenRequest = { scopes: ["Mail.Read"] };
   try {
     const silent = await window.msalInstance.acquireTokenSilent(tokenRequest);
     graphToken = silent.accessToken;
