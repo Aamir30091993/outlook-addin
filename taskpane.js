@@ -206,7 +206,17 @@ async function getConversationId(item) {
 
   // 3) Acquire Graph token via MSAL
   let graphToken;
-  const tokenRequest = { scopes: ["Mail.Read"] };
+  
+  const account = msalInstance.getAllAccounts()[0];
+  console.log("Account = " , account);
+if (!account) {
+  throw new Error("No account found");
+}
+  
+  const tokenRequest = { 
+  scopes: ["User.Read", "Mail.Read"],
+  account: account
+  };
   try {
     const silent = await window.msalInstance.acquireTokenSilent(tokenRequest);
     graphToken = silent.accessToken;
