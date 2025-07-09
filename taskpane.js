@@ -33,7 +33,7 @@ function saveSessionData(data) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
 
-function makeInstanceKey(tokenID, conversationID, from, toList) {
+function makeInstanceKey(tokenID, conversationID, from, toList, emailDate) {
   // Normalize 'to' list by splitting and sorting
   const recipients = toList.split(';').map(r => r.trim().toLowerCase()).filter(r => r);
   recipients.sort();
@@ -41,19 +41,19 @@ function makeInstanceKey(tokenID, conversationID, from, toList) {
   return [tokenID, conversationID, from.trim().toLowerCase(), normalizedTo].join("|");
 }
 
-function storeInstanceForConversation(tokenID, conversationID, from, to, instanceID) {
+function storeInstanceForConversation(tokenID, conversationID, from, to, instanceID, emailDate) {
   const session = loadSessionData();
   session.tokenID = tokenID;
-  const key = makeInstanceKey(tokenID, conversationID, from, to);
+  const key = makeInstanceKey(tokenID, conversationID, from, to, emailDate);
   session.instances = session.instances || {};
   session.instances[key] = { instanceID, created: new Date().toISOString() };
   saveSessionData(session);
 }
 
-function getStoredInstanceID(tokenID, conversationID, from, to) {
+function getStoredInstanceID(tokenID, conversationID, from, to, emailDate) {
   const session = loadSessionData();
   if (!session.instances) return null;
-  const key = makeInstanceKey(tokenID, conversationID, from, to);
+  const key = makeInstanceKey(tokenID, conversationID, from, to, emailDate);
   return session.instances[key]?.instanceID || null;
 }
 
@@ -199,12 +199,12 @@ async function handleProceed() {
   const convId = await getConversationId(item);
 
   // Extract item fields
-  const { mode, from, to, subject, date } = await extractItemInfo();
+  const { mode, from, to, subject, emailDate } = await extractItemInfo();
 
   const tokenID = localStorage.getItem("TokenID");
 
   // Determine or create instanceID
-  let instanceID = getStoredInstanceID(tokenID, convId, from, to);
+  let instanceID = getStoredInstanceID(tokenID, convId, from, to, emailDate);
   if (instanceID) {
     console.log("Reusing existing instanceID:", instanceID);
   } else {
@@ -223,7 +223,7 @@ async function handleProceed() {
     payload.append("tokenID", tokenID);
 	payload.append("clientEmailAddress", from);
     payload.append("emailSubject", subject);
-	payload.append("emailDate", date);
+	payload.append("emailDate", emailDate);
 	payload.append("from", from);
 	payload.append("to", to);
 	payload.append("conversationid", convId);
@@ -232,7 +232,7 @@ async function handleProceed() {
     instanceID = await callYourApi(payload);
 	console.log("After api call:", instanceID);
     if (instanceID) {
-      storeInstanceForConversation(tokenID, convId, from, to, instanceID);
+      storeInstanceForConversation(tokenID, convId, from, to, instanceID, emailDate);
       console.log("Stored new instanceID for conversation", convId);
     }
   }
@@ -308,7 +308,7 @@ async function getConversationId(item) {
 async function extractItemInfo() {
   const item = Office.context.mailbox.item;
   const isCompose = !!item.subject.getAsync;
-  let mode, from, to, subject, date;
+  let mode, from, to, subject, emailDate;
 
   if (isCompose) {
     mode = "Compose";
@@ -326,7 +326,7 @@ async function extractItemInfo() {
       item.subject.getAsync((res) => r(res.status === Office.AsyncResultStatus.Succeeded ? res.value : ""))
     );
     //date = new Date().toISOString();
-	date = formatEmailDate(new Date().toISOString());
+	emailDate = formatEmailDate(new Date().toISOString());
   } else {
     mode = "Read";
     from = item.from?.emailAddress || "";
@@ -335,11 +335,11 @@ async function extractItemInfo() {
     //date = item.dateTimeCreated
       //? item.dateTimeCreated.toISOString()
       //: new Date().toISOString();
-	date = formatEmailDate(item.dateTimeCreated.toISOString());
+	emailDate = formatEmailDate(item.dateTimeCreated.toISOString());
 	
-	console.log(date);
+	console.log(emailDate);
   }
-  return { mode, from, to, subject, date };
+  return { mode, from, to, subject, emailDate };
 }
 
 function formatEmailDate(isoString) {
